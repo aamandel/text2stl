@@ -84,12 +84,52 @@ text_settings:
   height: Text height
   kerning: Text kerning
   vkerning: Line kerning
+  customLineSpacing: Custom line spacing
+  lineGap: Lines {from}–{to}
+  textPath:
+    toggle: Curved text
+    showPreview: Show path in preview
+    line: 'Line {num}'
+    summaryStraight: Straight
+    summarySegments: '{count, plural, one {# segment} other {# segments}}'
+    orientation:
+      label: Letters
+      tangent: Follow curve
+      upright: Stay upright
+    segmentType:
+      label: Shape
+      arc: Arc
+      wave: Wave
+    arc:
+      width: Width
+      radius: Radius
+    wave:
+      amplitude: Amplitude
+      wavelength: Wavelength
+      cycles: Cycles
+    addSegment: Add segment
+    removeSegment: Remove
+    clampHint: Radius is small for this width; the curve will be flattened.
   supportHeight: Support height
   supportPadding: Support spacing
   advancedSupportPadding: Advanced support spacing
   alignment: Text alignment
   valignment: Text vertical alignement
   supportBorderRadius: Border radius
+  supportShape:
+    label: Support shape
+    rectangle: Rectangle
+    paragraph: Fit to text
+    svg: Custom SVG
+    upload: Upload SVG shape
+    currentFile: Current shape
+    noFile: None
+    badFileType: Unsupported file type, please use an .svg file
+    scale: Shape scale
+    offsetX: Text offset X
+    offsetY: Text offset Y
+    dropZone: Use a custom shape by dropping an SVG file here or
+    inputLabel: browse your computer for an SVG file
   handleSettings:
     label: Fixation type
     type:

@@ -1,6 +1,8 @@
 {{yield
   (hash
-    renderer=(component 'three-preview/renderer' mesh=@mesh nearCamera=@nearCamera)
+    renderer=(component
+      'three-preview/renderer' mesh=@mesh pathPreview=@pathPreview nearCamera=@nearCamera
+    )
     size=(component 'three-preview/size' mesh=@mesh)
   )
 }}

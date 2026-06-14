@@ -14,6 +14,7 @@ const {
 
 type namedArgs = {
   nearCamera?: boolean;
+  pathPreview?: THREE.Object3D;
 };
 
 interface ThreeRendererModifierSignature {
@@ -28,6 +29,10 @@ export default class ThreeRendererModifier extends Modifier<ThreeRendererModifie
   camera?: THREE.PerspectiveCamera;
   renderer?: THREE.WebGLRenderer | THREE.WebGL1Renderer;
   mesh?: THREE.Mesh;
+  pathPreview?: THREE.Object3D;
+
+  // Placement applied to the text mesh, reused so the path preview aligns with it.
+  meshPlacement?: { x: number; z: number; rotationX: number };
 
   controls?: OrbitControls;
 
@@ -168,7 +173,44 @@ export default class ThreeRendererModifier extends Modifier<ThreeRendererModifie
     const zCenter = min.y + this.meshSize.y / 2; // Use y size here as mesh is rotate
     this.mesh.position.z = zCenter;
 
+    this.meshPlacement = { x: -xCenter, z: zCenter, rotationX: -Math.PI / 2 };
+
     this.scene.add(this.mesh);
+  }
+
+  private disposeObject(object: THREE.Object3D) {
+    object.traverse((child) => {
+      const mesh = child as Partial<THREE.Mesh>;
+      mesh.geometry?.dispose();
+      const material = mesh.material;
+      if (Array.isArray(material)) {
+        material.forEach((m) => m.dispose());
+      } else {
+        material?.dispose();
+      }
+    });
+  }
+
+  private updatePathPreview(pathPreview?: THREE.Object3D) {
+    if (!this.scene) {
+      return;
+    }
+
+    if (this.pathPreview) {
+      this.scene.remove(this.pathPreview);
+      this.disposeObject(this.pathPreview);
+      this.pathPreview = undefined;
+    }
+
+    // Align with the text mesh (same flat-lay rotation & centering).
+    if (!pathPreview || !this.mesh || !this.meshPlacement) {
+      return;
+    }
+
+    this.pathPreview = pathPreview;
+    pathPreview.rotation.x = this.meshPlacement.rotationX;
+    pathPreview.position.set(this.meshPlacement.x, 0, this.meshPlacement.z);
+    this.scene.add(pathPreview);
   }
 
   private renderFrame() {
@@ -195,7 +237,11 @@ export default class ThreeRendererModifier extends Modifier<ThreeRendererModifie
     this.renderer.render(this.scene, this.camera);
   }
 
-  modify(element: HTMLCanvasElement, [mesh]: [THREE.Mesh | undefined], { nearCamera }: namedArgs) {
+  modify(
+    element: HTMLCanvasElement,
+    [mesh]: [THREE.Mesh | undefined],
+    { nearCamera, pathPreview }: namedArgs,
+  ) {
     this.namedArgs = { nearCamera };
 
     if (!this.canvas) {
@@ -206,5 +252,6 @@ export default class ThreeRendererModifier extends Modifier<ThreeRendererModifie
     }
 
     this.updateMesh(mesh);
+    this.updatePathPreview(pathPreview);
   }
 }

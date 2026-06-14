@@ -20,6 +20,16 @@
   width: 40rem;
 }
 
+.path-segment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  margin-block-end: 0.5rem;
+  border: 1px solid var(--calcite-ui-border-2);
+  border-radius: 0.25rem;
+}
+
 .center {
   text-align: center;
 }

@@ -22,6 +22,12 @@ export default class ThreeRendererModifier extends Modifier<DefaultSignature> {
       return;
     }
 
+    // Only adjust the value when the field is focused. Otherwise let the wheel
+    // scroll the settings panel normally, instead of hijacking scroll-over.
+    if (!this.element!.matches(':focus-within')) {
+      return;
+    }
+
     const step = e.ctrlKey ? 10 : e.altKey ? 0.1 : 1;
     const factor = e.deltaY < 0 ? 1 : -1;
     const newValue = Number(parseFloat(this.element!.value) + step * factor).toFixed(2);

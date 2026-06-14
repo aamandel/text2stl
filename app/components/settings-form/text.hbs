@@ -126,4 +126,213 @@
       data-test-settings-vspacing
     />
   </calcite-label>
+
+  <calcite-label layout='inline'>
+    {{t 'text_settings.customLineSpacing'}}
+    <calcite-switch
+      checked={{@model.customLineSpacing}}
+      data-test-custom-line-spacing
+      {{on 'calciteSwitchChange' this.toggleCustomLineSpacing}}
+    />
+  </calcite-label>
+
+  {{#if @model.customLineSpacing}}
+    {{#each this.lineGaps as |gap|}}
+      <calcite-label layout='inline-space-between'>
+        {{t 'text_settings.lineGap' from=gap.from to=gap.to}}
+        <calcite-input-number
+          class='w-70p'
+          placeholder={{t 'text_settings.lineGap' from=gap.from to=gap.to}}
+          suffix-text={{t 'mm_unit'}}
+          value={{gap.value}}
+          {{on 'calciteInputNumberChange' (fn this.setLineGap gap.index)}}
+          {{scrollable-input-number}}
+          step='1'
+          icon='distribute-height-evenly'
+          data-test-settings-line-gap={{gap.index}}
+        />
+      </calcite-label>
+    {{/each}}
+  {{/if}}
+{{/if}}
+
+{{#if this.pathSupported}}
+  <calcite-label layout='inline'>
+    {{t 'text_settings.textPath.toggle'}}
+    <calcite-switch
+      checked={{@model.customTextPath}}
+      data-test-custom-text-path
+      {{on 'calciteSwitchChange' this.toggleCustomTextPath}}
+    />
+  </calcite-label>
+
+  {{#if @model.customTextPath}}
+    <calcite-label layout='inline'>
+      {{t 'text_settings.textPath.showPreview'}}
+      <calcite-switch
+        checked={{@model.showPathPreview}}
+        data-test-show-path-preview
+        {{on 'calciteSwitchChange' this.toggleShowPathPreview}}
+      />
+    </calcite-label>
+
+    {{#each this.linePathRows key='index' as |line|}}
+      <calcite-block
+        heading={{t 'text_settings.textPath.line' num=line.label}}
+        description={{if
+          line.segmentCount
+          (t 'text_settings.textPath.summarySegments' count=line.segmentCount)
+          (t 'text_settings.textPath.summaryStraight')
+        }}
+        collapsible
+        data-test-line-path={{line.index}}
+      >
+        <calcite-label>
+          {{t 'text_settings.textPath.orientation.label'}}
+          <calcite-segmented-control
+            width='full'
+            scale='s'
+            data-test-line-orientation={{line.index}}
+            {{on 'calciteSegmentedControlChange' (fn this.setLineOrientation line.index)}}
+          >
+            {{#each this.orientationOptions as |opt|}}
+              <calcite-segmented-control-item
+                value={{opt}}
+                checked={{eq line.orientation opt}}
+                data-test-value={{opt}}
+              >{{t (concat 'text_settings.textPath.orientation.' opt)}}</calcite-segmented-control-item>
+            {{/each}}
+          </calcite-segmented-control>
+        </calcite-label>
+
+        {{#each line.segments key='index' as |segment|}}
+          <div class='path-segment' data-test-segment={{segment.index}}>
+            <calcite-label>
+              {{t 'text_settings.textPath.segmentType.label'}}
+              <calcite-segmented-control
+                width='full'
+                scale='s'
+                data-test-segment-type={{segment.index}}
+                {{on
+                  'calciteSegmentedControlChange'
+                  (fn this.setSegmentType line.index segment.index)
+                }}
+              >
+                {{#each this.segmentTypes as |st|}}
+                  <calcite-segmented-control-item
+                    value={{st}}
+                    checked={{eq segment.type st}}
+                    data-test-value={{st}}
+                  >{{t (concat 'text_settings.textPath.segmentType.' st)}}</calcite-segmented-control-item>
+                {{/each}}
+              </calcite-segmented-control>
+            </calcite-label>
+
+            {{#if (eq segment.type 'arc')}}
+              <calcite-label>
+                {{t 'text_settings.textPath.arc.width'}}
+                <calcite-input-number
+                  suffix-text={{t 'mm_unit'}}
+                  value={{segment.width}}
+                  {{on
+                    'calciteInputNumberChange'
+                    (fn this.setSegmentNumber line.index segment.index 'width')
+                  }}
+                  {{scrollable-input-number}}
+                  step='1'
+                  number-button-type='horizontal'
+                  data-test-segment-width={{segment.index}}
+                />
+              </calcite-label>
+              <calcite-label>
+                {{t 'text_settings.textPath.arc.radius'}}
+                <calcite-input-number
+                  suffix-text={{t 'mm_unit'}}
+                  value={{segment.radius}}
+                  {{on
+                    'calciteInputNumberChange'
+                    (fn this.setSegmentNumber line.index segment.index 'radius')
+                  }}
+                  {{scrollable-input-number}}
+                  step='1'
+                  number-button-type='horizontal'
+                  data-test-segment-radius={{segment.index}}
+                />
+              </calcite-label>
+              {{#if segment.clamped}}
+                <calcite-input-message icon='exclamation-mark-triangle' status='invalid'>
+                  {{t 'text_settings.textPath.clampHint'}}
+                </calcite-input-message>
+              {{/if}}
+            {{else}}
+              <calcite-label>
+                {{t 'text_settings.textPath.wave.amplitude'}}
+                <calcite-input-number
+                  suffix-text={{t 'mm_unit'}}
+                  value={{segment.amplitude}}
+                  {{on
+                    'calciteInputNumberChange'
+                    (fn this.setSegmentNumber line.index segment.index 'amplitude')
+                  }}
+                  {{scrollable-input-number}}
+                  step='1'
+                  number-button-type='horizontal'
+                  data-test-segment-amplitude={{segment.index}}
+                />
+              </calcite-label>
+              <calcite-label>
+                {{t 'text_settings.textPath.wave.wavelength'}}
+                <calcite-input-number
+                  suffix-text={{t 'mm_unit'}}
+                  value={{segment.wavelength}}
+                  {{on
+                    'calciteInputNumberChange'
+                    (fn this.setSegmentNumber line.index segment.index 'wavelength')
+                  }}
+                  {{scrollable-input-number}}
+                  step='1'
+                  number-button-type='horizontal'
+                  data-test-segment-wavelength={{segment.index}}
+                />
+              </calcite-label>
+              <calcite-label>
+                {{t 'text_settings.textPath.wave.cycles'}}
+                <calcite-input-number
+                  value={{segment.cycles}}
+                  {{on
+                    'calciteInputNumberChange'
+                    (fn this.setSegmentNumber line.index segment.index 'cycles')
+                  }}
+                  {{scrollable-input-number}}
+                  step='0.5'
+                  min='0'
+                  number-button-type='horizontal'
+                  data-test-segment-cycles={{segment.index}}
+                />
+              </calcite-label>
+            {{/if}}
+
+            <calcite-button
+              appearance='outline'
+              kind='danger'
+              scale='s'
+              width='full'
+              icon-start='trash'
+              data-test-remove-segment={{segment.index}}
+              {{on 'click' (fn this.removeSegment line.index segment.index)}}
+            >{{t 'text_settings.textPath.removeSegment'}}</calcite-button>
+          </div>
+        {{/each}}
+
+        <calcite-button
+          appearance='outline'
+          scale='s'
+          width='full'
+          icon-start='plus'
+          data-test-add-segment={{line.index}}
+          {{on 'click' (fn this.addSegment line.index)}}
+        >{{t 'text_settings.textPath.addSegment'}}</calcite-button>
+      </calcite-block>
+    {{/each}}
+  {{/if}}
 {{/if}}

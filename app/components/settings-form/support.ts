@@ -1,9 +1,12 @@
 import Component from '@glimmer/component';
 import { action } from '@ember/object';
 import { tracked } from '@glimmer/tracking';
+import { ModelType } from 'text2stl/services/text-maker';
 
 import type TextMakerSettings from 'text2stl/models/text-maker-settings';
 import type { CalciteInputNumber } from '@esri/calcite-components/dist/components/calcite-input-number';
+import type { CalciteSegmentedControl } from '@esri/calcite-components/dist/components/calcite-segmented-control';
+import type { SupportShapeType } from 'text2stl/services/text-maker';
 
 interface SupportFormTextSettingsArgs {
   model: TextMakerSettings;
@@ -17,6 +20,49 @@ export default class SupportFormTextSettings extends Component<SupportFormTextSe
     right: 'right-edge',
     left: 'left-edge',
   };
+
+  supportShapeTypes: SupportShapeType[] = ['rectangle', 'paragraph', 'svg'];
+  acceptedSvgMimeTypes = ['image/svg+xml'];
+
+  // The shape selector & custom shapes only apply to flat support types.
+  get showShapeSelector() {
+    return (
+      this.args.model.type === ModelType.TextWithSupport ||
+      this.args.model.type === ModelType.NegativeText
+    );
+  }
+
+  get supportShape(): SupportShapeType {
+    return this.showShapeSelector ? this.args.model.supportShape : 'rectangle';
+  }
+
+  get isSvgShape() {
+    return this.supportShape === 'svg';
+  }
+
+  // Border radius is meaningless for a custom SVG.
+  get showBorderRadius() {
+    return this.supportShape !== 'svg';
+  }
+
+  @action
+  setShapeType(e: CustomEvent) {
+    this.args.model.supportShape = (e.target as CalciteSegmentedControl).value as SupportShapeType;
+  }
+
+  @action
+  setSvgFile(file: File) {
+    this.args.model.customShapeSvg = file;
+  }
+
+  @action
+  setShapeNumber(
+    prop: 'supportShapeScale' | 'supportShapeOffsetX' | 'supportShapeOffsetY',
+    e: CustomEvent,
+  ) {
+    const v = parseFloat((e.target as CalciteInputNumber).value);
+    this.args.model[prop] = isNaN(v) ? 0 : v;
+  }
 
   @tracked _advancedSupportPadding: undefined | boolean;
 

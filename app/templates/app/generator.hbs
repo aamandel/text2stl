@@ -75,7 +75,12 @@
 </calcite-shell-panel>
 
 <calcite-panel>
-  <ThreePreview @mesh={{this.mesh.value}} @nearCamera={{true}} as |preview|>
+  <ThreePreview
+    @mesh={{this.mesh.value}}
+    @pathPreview={{this.pathPreview.value}}
+    @nearCamera={{true}}
+    as |preview|
+  >
 
     <div id='three-preview-container'>
       <preview.renderer />

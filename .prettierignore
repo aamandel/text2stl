@@ -11,3 +11,6 @@
 
 # ember-try
 /.node_modules.ember-try/
+
+# vendored third-party (three.js examples)
+/app/misc/threejs/

@@ -13,20 +13,107 @@
   />
 </calcite-label>
 
-<calcite-label>
-  {{t 'text_settings.supportBorderRadius'}}
-  <calcite-input-number
-    placeholder={{t 'text_settings.supportBorderRadius'}}
-    suffix-text={{t 'mm_unit'}}
-    value={{@model.supportBorderRadius}}
-    {{on 'calciteInputNumberChange' (fn this.setNumber 'supportBorderRadius')}}
-    {{scrollable-input-number}}
-    step='1'
-    number-button-type='horizontal'
-    icon='border-radius-rounded'
-    data-test-settings-supportBorderRadius
-  />
-</calcite-label>
+{{#if this.showShapeSelector}}
+  <calcite-label>
+    {{t 'text_settings.supportShape.label'}}
+    <calcite-segmented-control
+      width='full'
+      scale='s'
+      data-test-support-shape
+      {{on 'calciteSegmentedControlChange' this.setShapeType}}
+    >
+      {{#each this.supportShapeTypes as |shape|}}
+        <calcite-segmented-control-item
+          value={{shape}}
+          checked={{eq this.supportShape shape}}
+          data-test-value={{shape}}
+        >{{t (concat 'text_settings.supportShape.' shape)}}</calcite-segmented-control-item>
+      {{/each}}
+    </calcite-segmented-control>
+  </calcite-label>
+{{/if}}
+
+{{#if this.showBorderRadius}}
+  <calcite-label>
+    {{t 'text_settings.supportBorderRadius'}}
+    <calcite-input-number
+      placeholder={{t 'text_settings.supportBorderRadius'}}
+      suffix-text={{t 'mm_unit'}}
+      value={{@model.supportBorderRadius}}
+      {{on 'calciteInputNumberChange' (fn this.setNumber 'supportBorderRadius')}}
+      {{scrollable-input-number}}
+      step='1'
+      number-button-type='horizontal'
+      icon='border-radius-rounded'
+      data-test-settings-supportBorderRadius
+    />
+  </calcite-label>
+{{/if}}
+
+{{#if this.isSvgShape}}
+  <calcite-label>
+    {{t 'text_settings.supportShape.upload'}}
+    <Ui::FileUpload
+      @onFileChange={{this.setSvgFile}}
+      @mimeTypes={{this.acceptedSvgMimeTypes}}
+      @dropZoneLabel={{t 'text_settings.supportShape.dropZone'}}
+      @inputZoneLabel={{t 'text_settings.supportShape.inputLabel'}}
+      @mimeTypeError={{t 'text_settings.supportShape.badFileType'}}
+      data-test-support-svg-upload
+    />
+  </calcite-label>
+
+  <calcite-label>
+    {{t 'text_settings.supportShape.currentFile'}}
+    <calcite-input-text
+      value={{if @model.customShapeSvg @model.customShapeSvg.name (t 'text_settings.supportShape.noFile')}}
+      disabled
+      data-test-support-svg-name
+    />
+  </calcite-label>
+
+  <calcite-label>
+    {{t 'text_settings.supportShape.scale'}}
+    <calcite-input-number
+      value={{@model.supportShapeScale}}
+      {{on 'calciteInputNumberChange' (fn this.setShapeNumber 'supportShapeScale')}}
+      {{scrollable-input-number}}
+      step='0.1'
+      min='0.1'
+      number-button-type='horizontal'
+      icon='resize'
+      data-test-settings-support-shape-scale
+    />
+  </calcite-label>
+
+  <calcite-label>
+    {{t 'text_settings.supportShape.offsetX'}}
+    <calcite-input-number
+      suffix-text={{t 'mm_unit'}}
+      value={{@model.supportShapeOffsetX}}
+      {{on 'calciteInputNumberChange' (fn this.setShapeNumber 'supportShapeOffsetX')}}
+      {{scrollable-input-number}}
+      step='1'
+      number-button-type='horizontal'
+      icon='arrow-left-right'
+      data-test-settings-support-shape-offset-x
+    />
+  </calcite-label>
+
+  <calcite-label>
+    {{t 'text_settings.supportShape.offsetY'}}
+    <calcite-input-number
+      suffix-text={{t 'mm_unit'}}
+      value={{@model.supportShapeOffsetY}}
+      {{on 'calciteInputNumberChange' (fn this.setShapeNumber 'supportShapeOffsetY')}}
+      {{scrollable-input-number}}
+      step='1'
+      number-button-type='horizontal'
+      icon='arrow-up-down'
+      data-test-settings-support-shape-offset-y
+    />
+  </calcite-label>
+{{/if}}
 
 {{#if this.advancedSupportPadding}}
   <calcite-label>

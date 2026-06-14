@@ -10,6 +10,7 @@ import { tracked } from '@glimmer/tracking';
 import config from 'text2stl/config/environment';
 
 import type { Variant } from 'text2stl/services/font-manager';
+import type { LinePath, SupportShapeType } from 'text2stl/services/text-maker';
 
 const {
   APP: { textMakerDefault },
@@ -117,11 +118,25 @@ export default class TextMakerSettings implements TextMakerParameters, QPSeriali
   @tracked height?: number;
   @tracked spacing?: number;
   @tracked vSpacing?: number;
+  @tracked customLineSpacing: boolean;
+  @tracked lineSpacings: number[];
+  @tracked customTextPath: boolean;
+  @tracked linePaths: LinePath[];
+  // View-only: whether to show the path visualization in the 3D preview.
+  // Intentionally not serialized — it resets each visit.
+  @tracked showPathPreview = true;
   @tracked alignment: TextMakerAlignment;
   @tracked vAlignment: TextMakerVerticalAlignment;
   @tracked type: ModelType;
   @tracked supportHeight?: number;
   @tracked supportBorderRadius?: number;
+  @tracked supportShape: SupportShapeType;
+  @tracked supportShapeScale: number;
+  @tracked supportShapeOffsetX: number;
+  @tracked supportShapeOffsetY: number;
+  // Uploaded custom SVG support outline. Session-only (re-uploaded each visit),
+  // like customFont — intentionally not serialized into the URL.
+  @tracked customShapeSvg?: Blob;
   @tracked supportPadding: SupportPaddingSettings;
   @tracked handleSettings: HandleSettings;
 
@@ -133,11 +148,19 @@ export default class TextMakerSettings implements TextMakerParameters, QPSeriali
     this.height = args.height ?? textMakerDefault.height;
     this.spacing = args.spacing ?? textMakerDefault.spacing;
     this.vSpacing = args.vSpacing ?? textMakerDefault.vSpacing;
+    this.customLineSpacing = args.customLineSpacing ?? textMakerDefault.customLineSpacing;
+    this.lineSpacings = args.lineSpacings ?? [...textMakerDefault.lineSpacings];
+    this.customTextPath = args.customTextPath ?? textMakerDefault.customTextPath;
+    this.linePaths = args.linePaths ?? [...textMakerDefault.linePaths];
     this.alignment = args.alignment ?? textMakerDefault.alignment;
     this.vAlignment = args.vAlignment ?? textMakerDefault.vAlignment;
     this.type = args.type ?? textMakerDefault.type;
     this.supportHeight = args.supportHeight ?? textMakerDefault.supportHeight;
     this.supportBorderRadius = args.supportBorderRadius ?? textMakerDefault.supportBorderRadius;
+    this.supportShape = args.supportShape ?? textMakerDefault.supportShape;
+    this.supportShapeScale = args.supportShapeScale ?? textMakerDefault.supportShapeScale;
+    this.supportShapeOffsetX = args.supportShapeOffsetX ?? textMakerDefault.supportShapeOffsetX;
+    this.supportShapeOffsetY = args.supportShapeOffsetY ?? textMakerDefault.supportShapeOffsetY;
     this.supportPadding = new SupportPaddingSettings(
       args.supportPadding ?? textMakerDefault.supportPadding,
     );
@@ -156,11 +179,19 @@ export default class TextMakerSettings implements TextMakerParameters, QPSeriali
       height: this.height,
       spacing: this.spacing,
       vSpacing: this.vSpacing,
+      customLineSpacing: this.customLineSpacing,
+      lineSpacings: this.lineSpacings,
+      customTextPath: this.customTextPath,
+      linePaths: this.linePaths,
       alignment: this.alignment,
       vAlignment: this.vAlignment,
       type: this.type,
       supportHeight: this.supportHeight,
       supportBorderRadius: this.supportBorderRadius,
+      supportShape: this.supportShape,
+      supportShapeScale: this.supportShapeScale,
+      supportShapeOffsetX: this.supportShapeOffsetX,
+      supportShapeOffsetY: this.supportShapeOffsetY,
       supportPadding: this.supportPadding.serialize(),
       handleSettings: this.handleSettings.serialize(),
     });
@@ -180,11 +211,19 @@ export default class TextMakerSettings implements TextMakerParameters, QPSeriali
     this.height = v.height;
     this.spacing = v.spacing;
     this.vSpacing = v.vSpacing;
+    this.customLineSpacing = v.customLineSpacing ?? false;
+    this.lineSpacings = v.lineSpacings ?? [];
+    this.customTextPath = v.customTextPath ?? false;
+    this.linePaths = v.linePaths ?? [];
     this.alignment = v.alignment;
     this.vAlignment = v.vAlignment;
     this.type = v.type;
     this.supportHeight = v.supportHeight;
     this.supportBorderRadius = v.supportBorderRadius;
+    this.supportShape = v.supportShape ?? 'rectangle';
+    this.supportShapeScale = v.supportShapeScale ?? 1;
+    this.supportShapeOffsetX = v.supportShapeOffsetX ?? 0;
+    this.supportShapeOffsetY = v.supportShapeOffsetY ?? 0;
     this.supportPadding.deserialize(v.supportPadding);
     this.handleSettings.deserialize(v.handleSettings);
   }

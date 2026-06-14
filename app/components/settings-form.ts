@@ -8,7 +8,15 @@ interface SettingsFormTextSettingsArgs {
 
 export default class SettingsFormSettings extends Component<SettingsFormTextSettingsArgs> {
   get showHandleSettings() {
-    return this.args.model.type !== ModelType.TextOnly;
+    // Handles/holes are built into the rectangle outline only. Vertical text
+    // always uses the rectangle; the other support types only when 'rectangle'.
+    if (this.args.model.type === ModelType.TextOnly) {
+      return false;
+    }
+    if (this.args.model.type === ModelType.VerticalTextWithSupport) {
+      return true;
+    }
+    return (this.args.model.supportShape ?? 'rectangle') === 'rectangle';
   }
   get showSupportSettings() {
     return this.args.model.type !== ModelType.TextOnly;

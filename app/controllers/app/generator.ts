@@ -7,6 +7,7 @@ import FileExporterService from 'text2stl/services/file-exporter';
 import { tracked } from '@glimmer/tracking';
 import { trackedFunction } from 'ember-resources/util/function';
 import { Registry as Services } from '@ember/service';
+import { parseSvgShapes } from 'text2stl/misc/svg-shape';
 
 import type ApplicationRoute from 'text2stl/routes/app/generator';
 import type IntlService from 'ember-intl/services/intl';
@@ -46,6 +47,26 @@ export default class GeneratorController extends Controller {
       : this.fontManager.fetchFont(this.model.fontName, this.model.variantName);
   });
 
+  // Parse the uploaded custom support SVG (async, like the font).
+  customShape = trackedFunction(this, async () => {
+    if (this.model.supportShape !== 'svg' || !this.model.customShapeSvg) {
+      return undefined;
+    }
+
+    try {
+      const svgText = await this.model.customShapeSvg.text();
+      return parseSvgShapes(svgText);
+    } catch {
+      return undefined;
+    }
+  });
+
+  // Only depend on the (async) parsed SVG when a custom SVG shape is selected,
+  // so other shapes don't trigger an extra re-render when it resolves.
+  get currentCustomShape() {
+    return this.model.supportShape === 'svg' ? this.customShape.value ?? undefined : undefined;
+  }
+
   mesh = trackedFunction(this, () => {
     if (this.font.isResolved && this.font.value) {
       this._gtag('event', 'stl_generation', {
@@ -53,10 +74,27 @@ export default class GeneratorController extends Controller {
         value: this.model.type,
       });
 
-      return this.textMaker.generateMesh(this.model, this.font.value);
+      return this.textMaker.generateMesh(this.model, this.font.value, this.currentCustomShape);
     }
 
     return null;
+  });
+
+  pathPreview = trackedFunction(this, () => {
+    if (
+      this.model.customTextPath &&
+      this.model.showPathPreview &&
+      this.font.isResolved &&
+      this.font.value
+    ) {
+      return this.textMaker.generatePathPreview(
+        this.model,
+        this.font.value,
+        this.currentCustomShape,
+      );
+    }
+
+    return undefined;
   });
 
   get meshGenerating() {

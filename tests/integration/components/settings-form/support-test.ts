@@ -1,6 +1,6 @@
 import { module, test } from 'qunit';
 import { setupRenderingTest } from 'ember-qunit';
-import { render, click } from '@ember/test-helpers';
+import { render, click, find, triggerEvent } from '@ember/test-helpers';
 import { hbs } from 'ember-cli-htmlbars';
 import config from 'text2stl/config/environment';
 const {
@@ -92,5 +92,41 @@ module('Integration | Component | advanced-settings-form/support', function (hoo
       .hasValue(`${model.supportPadding.right}`, 'It renders correct right supportPadding value');
     await fillCalciteInput('[data-test-settings-supportPadding="right"]', '987');
     assert.strictEqual(model.supportPadding.right, 987, 'right supportPadding was updated');
+  });
+
+  async function changeSegmentedControl(selector: string, value: string) {
+    const control = find(selector) as HTMLElement & { value: string };
+    control.value = value;
+    await triggerEvent(control, 'calciteSegmentedControlChange');
+  }
+
+  test('support shape selector toggles the relevant controls', async function (assert) {
+    const model = new TextMakerSettings({
+      ...textMakerDefault,
+      type: ModelType.TextWithSupport,
+    });
+    this.set('model', model);
+
+    await render(hbs`<SettingsForm::Support @model={{this.model}} />`);
+
+    // Rectangle (default): border radius shown, no SVG controls.
+    assert.dom('[data-test-support-shape]').exists('shape selector is shown for support types');
+    assert.dom('[data-test-settings-supportBorderRadius]').exists('border radius shown');
+    assert.dom('[data-test-support-svg-upload]').doesNotExist('no SVG upload for rectangle');
+
+    // Switch to custom SVG: upload + scale + offsets appear, border radius hidden.
+    await changeSegmentedControl('[data-test-support-shape]', 'svg');
+    assert.strictEqual(model.supportShape, 'svg', 'model.supportShape updated to svg');
+    assert.dom('[data-test-support-svg-upload]').exists('SVG upload shown');
+    assert.dom('[data-test-settings-support-shape-scale]').exists('scale shown');
+    assert.dom('[data-test-settings-support-shape-offset-x]').exists('offset X shown');
+    assert.dom('[data-test-settings-support-shape-offset-y]').exists('offset Y shown');
+    assert.dom('[data-test-settings-supportBorderRadius]').doesNotExist('border radius hidden for svg');
+
+    // Switch to paragraph fit: border radius back, no SVG controls.
+    await changeSegmentedControl('[data-test-support-shape]', 'paragraph');
+    assert.strictEqual(model.supportShape, 'paragraph', 'model.supportShape updated to paragraph');
+    assert.dom('[data-test-settings-supportBorderRadius]').exists('border radius shown for paragraph');
+    assert.dom('[data-test-support-svg-upload]').doesNotExist('no SVG upload for paragraph');
   });
 });

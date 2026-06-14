@@ -84,12 +84,52 @@ text_settings:
   height: Hauteur du texte
   kerning: Espacement du texte
   vkerning: Espacement des lignes
+  customLineSpacing: Espacement par ligne
+  lineGap: Lignes {from}–{to}
+  textPath:
+    toggle: Texte courbé
+    showPreview: Afficher le tracé
+    line: 'Ligne {num}'
+    summaryStraight: Droit
+    summarySegments: '{count, plural, one {# segment} other {# segments}}'
+    orientation:
+      label: Lettres
+      tangent: Suivre la courbe
+      upright: Rester droites
+    segmentType:
+      label: Forme
+      arc: Arc
+      wave: Vague
+    arc:
+      width: Largeur
+      radius: Rayon
+    wave:
+      amplitude: Amplitude
+      wavelength: Longueur d'onde
+      cycles: Cycles
+    addSegment: Ajouter un segment
+    removeSegment: Supprimer
+    clampHint: Le rayon est petit pour cette largeur ; la courbe sera aplatie.
   supportHeight: Hauteur du support
   supportPadding: Espacement du support
   advancedSupportPadding: Espacement du support avancé
   alignment: Alignement du texte
   valignment: Alignement vertical du texte
   supportBorderRadius: Rayon des coins
+  supportShape:
+    label: Forme du support
+    rectangle: Rectangle
+    paragraph: Ajuster au texte
+    svg: SVG personnalisé
+    upload: Importer une forme SVG
+    currentFile: Forme actuelle
+    noFile: Aucune
+    badFileType: Type de fichier non supporté, veuillez utiliser un fichier .svg
+    scale: Échelle de la forme
+    offsetX: Décalage X du texte
+    offsetY: Décalage Y du texte
+    dropZone: Utilisez une forme personnalisée en déposant un fichier SVG ici ou
+    inputLabel: parcourez votre ordinateur pour un fichier SVG
   handleSettings:
     label: Option de fixation
     type:

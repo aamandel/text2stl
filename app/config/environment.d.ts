@@ -1,6 +1,7 @@
 export default config;
 import { ModelType } from 'text2stl/services/text-maker';
 import type { Variant } from 'text2stl/services/font-manager';
+import type { LinePath, SupportShapeType } from 'text2stl/services/text-maker';
 
 /**
  * Type declarations for
@@ -25,11 +26,19 @@ declare const config: {
       height: number;
       spacing: number;
       vSpacing: number;
+      customLineSpacing: boolean;
+      lineSpacings: number[];
+      customTextPath: boolean;
+      linePaths: LinePath[];
       alignment: 'left' | 'center' | 'right';
       vAlignment: 'default' | 'top' | 'bottom';
       type: ModelType;
       supportHeight: number;
       supportBorderRadius: number;
+      supportShape: SupportShapeType;
+      supportShapeScale: number;
+      supportShapeOffsetX: number;
+      supportShapeOffsetY: number;
       supportPadding: {
         top: number;
         bottom: number;

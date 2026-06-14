@@ -1,6 +1,151 @@
 import * as THREE from 'three';
 import { Handle } from 'text2stl/services/text-maker';
 
+export type SupportRect = { left: number; right: number; bottom: number; top: number };
+
+type Pt = { x: number; y: number };
+
+const EPS = 1e-6;
+
+// Remove consecutive duplicate and collinear points from a closed polygon ring.
+function cleanPolygon(points: Pt[]): Pt[] {
+  const deduped: Pt[] = [];
+  for (const p of points) {
+    const last = deduped[deduped.length - 1];
+    if (!last || Math.abs(last.x - p.x) > EPS || Math.abs(last.y - p.y) > EPS) {
+      deduped.push(p);
+    }
+  }
+  // Drop a closing duplicate of the first point.
+  if (deduped.length > 1) {
+    const first = deduped[0];
+    const last = deduped[deduped.length - 1];
+    if (Math.abs(first.x - last.x) <= EPS && Math.abs(first.y - last.y) <= EPS) {
+      deduped.pop();
+    }
+  }
+
+  // Remove collinear points (a vertex where the turn is ~0).
+  const result: Pt[] = [];
+  const n = deduped.length;
+  for (let i = 0; i < n; i++) {
+    const prev = deduped[(i - 1 + n) % n];
+    const cur = deduped[i];
+    const next = deduped[(i + 1) % n];
+    const cross =
+      (cur.x - prev.x) * (next.y - cur.y) - (cur.y - prev.y) * (next.x - cur.x);
+    if (Math.abs(cross) > EPS) {
+      result.push(cur);
+    }
+  }
+
+  return result.length >= 3 ? result : deduped;
+}
+
+/**
+ * Build a THREE.Shape from a polygon ring, rounding only its convex corners
+ * (reflex/step corners stay sharp). The corner radius is capped to half of the
+ * shorter adjacent edge so short edges never over-round. Each rounded corner is
+ * a quadratic curve through the original vertex.
+ */
+export function roundedPolygonShape(rawPoints: Pt[], radius: number): THREE.Shape {
+  const pts = cleanPolygon(rawPoints);
+  const shape = new THREE.Shape();
+  const n = pts.length;
+  if (n < 3) {
+    return shape;
+  }
+
+  // Polygon winding (signed area): >0 CCW, <0 CW.
+  let area = 0;
+  for (let i = 0; i < n; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % n];
+    area += a.x * b.y - b.x * a.y;
+  }
+  const winding = area >= 0 ? 1 : -1;
+
+  for (let i = 0; i < n; i++) {
+    const v = pts[i];
+    const prev = pts[(i - 1 + n) % n];
+    const next = pts[(i + 1) % n];
+
+    const inX = v.x - prev.x;
+    const inY = v.y - prev.y;
+    const outX = next.x - v.x;
+    const outY = next.y - v.y;
+    const cross = inX * outY - inY * outX;
+    const convex = cross * winding > 0;
+
+    const len1 = Math.hypot(v.x - prev.x, v.y - prev.y);
+    const len2 = Math.hypot(next.x - v.x, next.y - v.y);
+    const t = Math.min(radius, len1 / 2, len2 / 2);
+
+    if (!convex || radius <= 0 || t <= EPS) {
+      // Sharp corner.
+      if (i === 0) {
+        shape.moveTo(v.x, v.y);
+      } else {
+        shape.lineTo(v.x, v.y);
+      }
+      continue;
+    }
+
+    // Unit vectors from the vertex toward its neighbours.
+    const u1x = (prev.x - v.x) / len1;
+    const u1y = (prev.y - v.y) / len1;
+    const u2x = (next.x - v.x) / len2;
+    const u2y = (next.y - v.y) / len2;
+
+    const t1 = { x: v.x + u1x * t, y: v.y + u1y * t };
+    const t2 = { x: v.x + u2x * t, y: v.y + u2y * t };
+
+    if (i === 0) {
+      shape.moveTo(t1.x, t1.y);
+    } else {
+      shape.lineTo(t1.x, t1.y);
+    }
+    shape.quadraticCurveTo(v.x, v.y, t2.x, t2.y);
+  }
+
+  shape.closePath();
+  return shape;
+}
+
+/**
+ * Support outline that fits a paragraph: a vertical stack of adjacent rectangles
+ * (each block[i].bottom === block[i+1].top), unioned into one outline with
+ * convex corners rounded. With one block this is just a rounded rectangle.
+ */
+export function generateParagraphSupportShape(blocks: SupportRect[], radius: number): THREE.Shape {
+  const ring: Pt[] = [];
+
+  // Top edge of the first (topmost) block.
+  ring.push({ x: blocks[0].left, y: blocks[0].top });
+  ring.push({ x: blocks[0].right, y: blocks[0].top });
+
+  // Right side, top to bottom (stepping between blocks).
+  for (let i = 0; i < blocks.length; i++) {
+    ring.push({ x: blocks[i].right, y: blocks[i].bottom });
+    if (i + 1 < blocks.length) {
+      ring.push({ x: blocks[i + 1].right, y: blocks[i + 1].top });
+    }
+  }
+
+  // Bottom edge of the last block.
+  ring.push({ x: blocks[blocks.length - 1].left, y: blocks[blocks.length - 1].bottom });
+
+  // Left side, bottom to top.
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    ring.push({ x: blocks[i].left, y: blocks[i].top });
+    if (i - 1 >= 0) {
+      ring.push({ x: blocks[i - 1].left, y: blocks[i - 1].bottom });
+    }
+  }
+
+  return roundedPolygonShape(ring, radius);
+}
+
 export function generateSupportShape(
   width: number,
   height: number,
