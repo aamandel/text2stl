@@ -592,7 +592,11 @@ export default class TextMakerService extends Service {
 
   // Two-block paragraph support: a wide box for all lines but the last, plus a
   // right-sized box for the last line, expressed in support coordinates.
-  private buildParagraphBlocks(plyghsDef: MultipleGlyphDef, pad: SupportPadding): SupportRect[] {
+  private buildParagraphBlocks(
+    plyghsDef: MultipleGlyphDef,
+    pad: SupportPadding,
+    alignment: TextMakerAlignment,
+  ): SupportRect[] {
     const { min, max } = plyghsDef.bounds;
     const mapX = (gx: number) => gx - min.x + pad.left;
     const mapY = (gy: number) => gy - min.y + pad.bottom;
@@ -663,6 +667,16 @@ export default class TextMakerService extends Service {
       bottom: mapY(lastRect.bottom) - pad.bottom,
     };
 
+    // On the aligned side the body and the last-line tab should share one
+    // straight edge. Per-line glyph ink bounds vary (left/right side bearings),
+    // so the two blocks' edges can differ by a hair and leave a tiny ledge where
+    // the tab meets the body. Snap that side to a common coordinate.
+    if (alignment === 'left') {
+      blockA.left = blockB.left = Math.min(blockA.left, blockB.left);
+    } else if (alignment === 'right') {
+      blockA.right = blockB.right = Math.max(blockA.right, blockB.right);
+    }
+
     return [blockA, blockB];
   }
 
@@ -710,8 +724,15 @@ export default class TextMakerService extends Service {
     }
 
     if (shapeType === 'paragraph') {
+      const alignment =
+        params.alignment !== undefined ? params.alignment : textMakerDefault.alignment;
       return {
-        shapes: [generateParagraphSupportShape(this.buildParagraphBlocks(plyghsDef, pad), radius)],
+        shapes: [
+          generateParagraphSupportShape(
+            this.buildParagraphBlocks(plyghsDef, pad, alignment),
+            radius,
+          ),
+        ],
         placement: { x: -min.x + pad.left, y: -min.y + pad.bottom },
       };
     }

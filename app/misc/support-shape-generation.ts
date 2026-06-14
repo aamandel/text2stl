@@ -43,10 +43,13 @@ function cleanPolygon(points: Pt[]): Pt[] {
 }
 
 /**
- * Build a THREE.Shape from a polygon ring, rounding only its convex corners
- * (reflex/step corners stay sharp). The corner radius is capped to half of the
- * shorter adjacent edge so short edges never over-round. Each rounded corner is
- * a quadratic curve through the original vertex.
+ * Build a THREE.Shape from a polygon ring, rounding every corner. The same
+ * quadratic-through-vertex construction is tangent to both adjacent edges
+ * regardless of the turn direction: convex corners are cut inward, while
+ * reflex/step corners (e.g. where a narrow last-line tab meets the wider body)
+ * get a concave fillet that grows with the radius. The corner radius is capped
+ * to half of the shorter adjacent edge so short edges never over-round and
+ * neighbouring corners can't overlap.
  */
 export function roundedPolygonShape(rawPoints: Pt[], radius: number): THREE.Shape {
   const pts = cleanPolygon(rawPoints);
@@ -56,32 +59,16 @@ export function roundedPolygonShape(rawPoints: Pt[], radius: number): THREE.Shap
     return shape;
   }
 
-  // Polygon winding (signed area): >0 CCW, <0 CW.
-  let area = 0;
-  for (let i = 0; i < n; i++) {
-    const a = pts[i];
-    const b = pts[(i + 1) % n];
-    area += a.x * b.y - b.x * a.y;
-  }
-  const winding = area >= 0 ? 1 : -1;
-
   for (let i = 0; i < n; i++) {
     const v = pts[i];
     const prev = pts[(i - 1 + n) % n];
     const next = pts[(i + 1) % n];
 
-    const inX = v.x - prev.x;
-    const inY = v.y - prev.y;
-    const outX = next.x - v.x;
-    const outY = next.y - v.y;
-    const cross = inX * outY - inY * outX;
-    const convex = cross * winding > 0;
-
     const len1 = Math.hypot(v.x - prev.x, v.y - prev.y);
     const len2 = Math.hypot(next.x - v.x, next.y - v.y);
     const t = Math.min(radius, len1 / 2, len2 / 2);
 
-    if (!convex || radius <= 0 || t <= EPS) {
+    if (radius <= 0 || t <= EPS) {
       // Sharp corner.
       if (i === 0) {
         shape.moveTo(v.x, v.y);

@@ -24,6 +24,19 @@ function bbox(shape: THREE.Shape) {
   return { minX, minY, maxX, maxY };
 }
 
+function contains(shape: THREE.Shape, x: number, y: number) {
+  const pts = points(shape);
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const a = pts[i];
+    const b = pts[j];
+    if (a.y > y !== b.y > y && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
 function area(shape: THREE.Shape) {
   const pts = points(shape);
   let a = 0;
@@ -94,5 +107,35 @@ module('Unit | Misc | support-shape-generation', function (hooks) {
     const hasExactCorner = points(rounded).some((p) => Math.abs(p.x) < 0.5 && Math.abs(p.y) < 0.5);
     assert.false(hasExactCorner, 'the sharp corner point is gone');
     assert.true(area(rounded) < area(sharp), 'rounded area is smaller');
+  });
+
+  test('rounding fillets the reflex corner joining the last-line tab', function (assert) {
+    // Wide body block + narrower (left-aligned) tab below it. The step at
+    // x=40,y=25 is the reflex corner connecting the tab to the body.
+    const blocks = [
+      { left: 0, right: 100, bottom: 25, top: 60 },
+      { left: 0, right: 40, bottom: 0, top: 25 },
+    ];
+    const sharp = generateParagraphSupportShape(blocks, 0);
+    const rounded = generateParagraphSupportShape(blocks, 10);
+
+    // Bounding box is unchanged by rounding.
+    const sb = bbox(sharp);
+    const rb = bbox(rounded);
+    assert.strictEqual(Math.round(rb.maxX), Math.round(sb.maxX), 'right preserved');
+    assert.strictEqual(Math.round(rb.maxY), Math.round(sb.maxY), 'top preserved');
+
+    // The sharp step vertex (40,25) is replaced by a curve, so no point sits
+    // exactly on it.
+    const hasSharpStep = points(rounded).some(
+      (p) => Math.abs(p.x - 40) < 0.5 && Math.abs(p.y - 25) < 0.5,
+    );
+    assert.false(hasSharpStep, 'the sharp step corner point is gone');
+
+    // A point just inside the reflex corner (beyond the tab's right edge, below
+    // the body) is exterior to the sharp outline but filled by the concave
+    // fillet once rounded.
+    assert.false(contains(sharp, 41, 24), 'inner corner is empty when sharp');
+    assert.true(contains(rounded, 41, 24), 'concave fillet fills the inner corner');
   });
 });
